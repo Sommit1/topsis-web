@@ -11,6 +11,7 @@
     button { margin-top:16px; padding:10px 16px; background:#f2b400; border:none; cursor:pointer; font-weight:700; }
     .msg { margin-top: 10px; color: #1a7f37; }
     .err { margin-top: 10px; color: #b00020; }
+    .download { margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -19,6 +20,12 @@
 
     {% if error %}<div class="err">{{ error }}</div>{% endif %}
     {% if message %}<div class="msg">{{ message }}</div>{% endif %}
+
+    {% if download_file %}
+      <div class="download">
+        <a href="/download/{{ download_file }}">Download Result CSV</a>
+      </div>
+    {% endif %}
 
     <form method="POST" action="/submit" enctype="multipart/form-data">
       <label>File Name</label>
