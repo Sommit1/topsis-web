@@ -4,7 +4,7 @@ import uuid
 import pandas as pd
 import numpy as np
 
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_from_directory
 from dotenv import load_dotenv
 
 import smtplib
@@ -169,6 +169,10 @@ def submit():
 
     except Exception as e:
         return render_template("index.html", error=f"Error: {str(e)}")
+
+@app.get("/download/<filename>")
+def download(filename):
+    return send_from_directory(RESULT_DIR, filename, as_attachment=True)
 
 
 if __name__ == "__main__":
