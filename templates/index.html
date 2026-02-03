@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>TOPSIS Web Service</title>
+  <style>
+    body { font-family: Arial; background:#f6f6f6; }
+    .box { width: 430px; margin: 60px auto; background:#fff; padding:20px; border-radius:10px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    label { display:block; margin-top:12px; font-weight:600; }
+    input { width: 100%; padding:10px; margin-top:6px; box-sizing:border-box; }
+    button { margin-top:16px; padding:10px 16px; background:#f2b400; border:none; cursor:pointer; font-weight:700; }
+    .msg { margin-top: 10px; color: #1a7f37; }
+    .err { margin-top: 10px; color: #b00020; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h2>TOPSIS Web Service</h2>
+
+    {% if error %}<div class="err">{{ error }}</div>{% endif %}
+    {% if message %}<div class="msg">{{ message }}</div>{% endif %}
+
+    <form method="POST" action="/submit" enctype="multipart/form-data">
+      <label>File Name</label>
+      <input type="file" name="file" accept=".csv" required />
+
+      <label>Weights</label>
+      <input type="text" name="weights" placeholder="1,1,1,2" required />
+
+      <label>Impacts</label>
+      <input type="text" name="impacts" placeholder="+,+,-,+" required />
+
+      <label>Email Id</label>
+      <input type="email" name="email" placeholder="abc@gmail.com" required />
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+</body>
+</html>
