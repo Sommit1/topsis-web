@@ -111,7 +111,7 @@ def send_email_with_attachment(to_email: str, attachment_path: str) -> None:
     # attach as CSV
     msg.add_attachment(file_data, maintype="text", subtype="csv", filename=filename)
 
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
+    with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
         server.starttls()
         server.login(smtp_user, smtp_pass)
         server.send_message(msg)
