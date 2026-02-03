@@ -14,8 +14,9 @@ load_dotenv()
 
 app = Flask(__name__)
 
-UPLOAD_DIR = "uploads"
-RESULT_DIR = "results"
+# ✅ Use /tmp for Render (safe for cloud environments)
+UPLOAD_DIR = "/tmp/uploads"
+RESULT_DIR = "/tmp/results"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(RESULT_DIR, exist_ok=True)
 
@@ -23,10 +24,9 @@ EMAIL_REGEX = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
 
 
 # -----------------------
-# TOPSIS CORE (logic as a function for web use)
+# TOPSIS CORE
 # -----------------------
 def run_topsis(input_file: str, weights_str: str, impacts_str: str, output_file: str) -> None:
-    # Parse weights & impacts
     weights = [w.strip() for w in weights_str.split(",")]
     impacts = [i.strip() for i in impacts_str.split(",")]
 
@@ -96,7 +96,7 @@ def send_email_with_attachment(to_email: str, attachment_path: str) -> None:
     smtp_port = int(os.getenv("SMTP_PORT", "587"))
 
     if not smtp_user or not smtp_pass:
-        raise RuntimeError("Email credentials missing. Set SMTP_USER and SMTP_PASS in .env")
+        raise RuntimeError("Email credentials missing. Set SMTP_USER and SMTP_PASS in Render env vars.")
 
     msg = EmailMessage()
     msg["Subject"] = "TOPSIS Result File"
@@ -108,11 +108,13 @@ def send_email_with_attachment(to_email: str, attachment_path: str) -> None:
     with open(attachment_path, "rb") as f:
         file_data = f.read()
 
-    # attach as CSV
     msg.add_attachment(file_data, maintype="text", subtype="csv", filename=filename)
 
+    # ✅ Timeout prevents hanging forever on cloud hosts
     with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
+        server.ehlo()
         server.starttls()
+        server.ehlo()
         server.login(smtp_user, smtp_pass)
         server.send_message(msg)
 
@@ -158,17 +160,25 @@ def submit():
         input_path = os.path.join(UPLOAD_DIR, f"{uid}_{file.filename}")
         file.save(input_path)
 
-        # Run TOPSIS
+        # Run TOPSIS -> create output file
         output_path = os.path.join(RESULT_DIR, f"topsis_result_{uid}.csv")
         run_topsis(input_path, weights, impacts, output_path)
 
-        # Email result
-        send_email_with_attachment(email, output_path)
-
-        return render_template("index.html", message="Result generated and emailed successfully!")
+        # Try emailing result (may be blocked on some hosts)
+        try:
+            send_email_with_attachment(email, output_path)
+            return render_template("index.html", message="Result generated and emailed successfully!")
+        except Exception as e:
+            # ✅ fallback: let user download result
+            return render_template(
+                "index.html",
+                error=f"Email failed on server: {str(e)}. Download your result below.",
+                download_file=os.path.basename(output_path)
+            )
 
     except Exception as e:
         return render_template("index.html", error=f"Error: {str(e)}")
+
 
 @app.get("/download/<filename>")
 def download(filename):
